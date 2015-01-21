@@ -50,6 +50,7 @@ int timeSet2[5] = {0,0,0,0,0}; // New time array
 // Schedules
 // (0/1 (enabled/disabled), HH, MM)
 int schedules[] = {0,0,0,0,0,0};
+int schedulesCPY[] = {0,0,0,0,0,0}; // Copy to track changes
 // Array for state displaying
 char schedulesState [] = {'N','N'};
 // Amount of schedules
@@ -237,9 +238,32 @@ void updateDT(int* timeSet, int position, int direction) {
 		for (int i=0;i<5;i++) { Serial.print(timeSet[i]); Serial.print(".");}
 		Serial.println();
 		#endif
+
+		sprintf(formatted1, "%02d-%02d-%02d %02d:%02d", timeSet[0], timeSet[1], timeSet[2], timeSet[3], timeSet[4]);
+		lcdUpdateTime(formatted1);
+		lcd.setCursor(1+position*3,0);
+}
+
+// Update Schedules
+void updateSCH(int* schArray, int position, int direction) {
+	if (direction == 1) schArray[position]++;
+	else schArray[position]--;
+
+	// check range for Enable bit - could be 0/1
+	if (position % 3 == 0) schArray[position] = constrain(schArray[position],0,1);
+	// check range for hours
+	if (position % 3 == 1) if (schArray[position] > 23) schArray[position] = 0;
+		else if (schArray[position] < 0) schArray[position] = 24;
+	// check range for minutes
+	if (position % 3 == 2) if (schArray[position] > 59) schArray[position] = 0;
+		else if (schArray[position] < 0) schArray[position] = 59;
+
+	lcdUpdateSchedule ( );
 }
 
 
+
+// Main part
 	void loop()	 /*----( LOOP: RUNS CONSTANTLY )----*/
 	{
 		unsigned long currentMillis = millis();
@@ -279,13 +303,14 @@ void updateDT(int* timeSet, int position, int direction) {
 				RTC.getFormattedShort(formatted);
 				clockTimer = currentMillis;
 				lcdUpdateTime(formatted);
-				} else if ((currentMillis - clockTimer1 > interval1) && action == 20 && !cmpArray(timeSet1, timeSet2, 5)) {
+			}
+			/*else if ((currentMillis - clockTimer1 > interval1) && action == 20 && !cmpArray(timeSet1, timeSet2, 5)) {
 					// Update clocks based on changing value
 					clockTimer1 = currentMillis;
 					sprintf(formatted1, "%02d-%02d-%02d %02d:%02d", timeSet1[0], timeSet1[1], timeSet1[2], timeSet1[3], timeSet1[4]);
 					lcdUpdateTime(formatted1);
 					lcd.setCursor(1+timeSelector*3,0);
-				}
+				}*/
 
 				// Select button clicked
 				if (selectButton.clicks == 1) {
@@ -315,6 +340,8 @@ void updateDT(int* timeSet, int position, int direction) {
 						// Set Schedule
             	action = TRDSCHMENU;
 							schSelector = 0;
+							// Saving array to copy
+							copyArray(schedules,schedulesCPY,schAmounts);
 							lcd.blink();
 							lcdUpdateSchedule();
 						break;
@@ -358,11 +385,13 @@ void updateDT(int* timeSet, int position, int direction) {
 						// Do for Second level menu
 						switch(action) {
 							case ROOTMENU:
+							// Do nothing in root menu
 							break;
 							case TRDDTMENU:
-							updateDT(timeSet1, timeSelector, 1);
+								updateDT(timeSet1, timeSelector, 1);
 							break;
 							case TRDSCHMENU:
+								updateSCH(schedules, schSelector, 1);
 							break;
 							default:
 							action--;
@@ -376,11 +405,13 @@ void updateDT(int* timeSet, int position, int direction) {
 							// Do for Second level menu
 							switch(action) {
 								case ROOTMENU:
+								// Do nothing in root menu
 								break;
 								case TRDDTMENU:
 									updateDT(timeSet1, timeSelector, -1);
 								break;
 								case TRDSCHMENU:
+									updateSCH(schedules, schSelector, -1);
 								break;
 								default:
 									action++;
