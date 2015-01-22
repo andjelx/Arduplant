@@ -2,8 +2,6 @@
 // Arduplant - feeding plants by schedule
 // by Andrey Zhelnin <andjel@gmail.com>
 //
-//
-
 
 #include <ClickButton.h>
 #include <Wire.h>
@@ -122,12 +120,12 @@ void setup()
 	actions1[2] = action2;
 
 	// Init EEPROM values if 255
-  for (int i = 0; i < schAmounts*3 ;i++)
+	for (int i = 0; i < schAmounts*3 ;i++)
 		if ( EEPROM.read(schedulesEEPROM[i]) == 255) EEPROM.write(schedulesEEPROM[i],0);
 
 	// init schedules from EEPROM
-  for (int i = 0; i < schAmounts*3; i++) {
-			schedules[i] = EEPROM.read(schedulesEEPROM[i]);
+	for (int i = 0; i < schAmounts*3; i++) {
+		schedules[i] = EEPROM.read(schedulesEEPROM[i]);
 
 #ifdef DEBUG
       Serial.print(i);
@@ -141,7 +139,7 @@ void setup()
 	lcd.begin(16,2);	 // initialize the lcd for 16 chars 2 lines, turn on backlight
 
 	// ------- Quick 3 blinks of backlight	-------------
-	#ifdef PROD
+#ifdef PROD
 	for(int i = 0; i< 3; i++)
 	{
 		lcd.backlight();
@@ -155,7 +153,7 @@ void setup()
 	lcd.print("All your plant");
 	lcd.setCursor(0,1);
 	lcd.print("are belong to us");
-	#endif
+#endif
 
 	// Write time first time
 	RTC.readClock();
@@ -166,75 +164,75 @@ void setup()
 	#endif
 	lcdUpdateMenu(ACTIONROOT);
 
-	}/*--(end setup )---*/
+}/*--(end setup )---*/
 
-	//
-	boolean cmpArray(int *a, int *b, int len){
-		int n;
-		// test each element to be the same. if not, return false
-		for (n=0;n<len;n++) if (a[n]!=b[n]) return false;
-		//ok, if we have not returned yet, they are equal :)
-		return true;
-	}
+//
+boolean cmpArray(int *a, int *b, int len){
+	int n;
+	// test each element to be the same. if not, return false
+	for (n=0;n<len;n++) if (a[n]!=b[n]) return false;
+	//ok, if we have not returned yet, they are equal :)
+	return true;
+}
 
 
-	// fill current time into array
-	void getRTCtoArray (int* timeArray) {
-		RTC.readClock();
-		timeArray[0] = RTC.getYear();
-		timeArray[1] = RTC.getMonth();
-		timeArray[2] = RTC.getDay();
-		timeArray[3] = RTC.getHours();
-		timeArray[4] = RTC.getMinutes();
-	}
+// fill current time into array
+void getRTCtoArray (int* timeArray) {
+	RTC.readClock();
+	timeArray[0] = RTC.getYear();
+	timeArray[1] = RTC.getMonth();
+	timeArray[2] = RTC.getDay();
+	timeArray[3] = RTC.getHours();
+	timeArray[4] = RTC.getMinutes();
+}
 
-	//Set time from array
-	void setRTCfromArray (int* timeArray) {
-		RTC.setYear(timeArray[0]);
-		RTC.setMonth(timeArray[1]);
-		RTC.setDay(timeArray[2]);
-		RTC.setHours(timeArray[3]);
-		RTC.setMinutes(timeArray[4]);
-		RTC.setClock();
-	}
+//Set time from array
+void setRTCfromArray (int* timeArray) {
+	RTC.setYear(timeArray[0]);
+	RTC.setMonth(timeArray[1]);
+	RTC.setDay(timeArray[2]);
+	RTC.setHours(timeArray[3]);
+	RTC.setMinutes(timeArray[4]);
+	RTC.setClock();
+}
 
 // Set Schedules
-	boolean setSchedules (int* schArray, int* schArrayCPY, int arraySize) {
-			boolean fState = false;
-			for (int i = 0; i < arraySize; i++ )
-				if (schArray[i] != schArrayCPY[i]) {
-					EEPROM.write(schedulesEEPROM[i],schArray[i]);
-					fState = true;
-				}
-			return fState;
-	 }
+boolean setSchedules (int* schArray, int* schArrayCPY, int arraySize) {
+	boolean fState = false;
+	for (int i = 0; i < arraySize; i++ )
+		if (schArray[i] != schArrayCPY[i]) {
+			EEPROM.write(schedulesEEPROM[i],schArray[i]);
+			fState = true;
+		}
+	return fState;
+ }
 
 
-	// Copy one array to another
-	void copyArray(int *arrayOriginal, int *arrayCopy, int arraySize){
-		while(arraySize--) *arrayCopy++ = *arrayOriginal++;
-	}
+// Copy one array to another
+void copyArray(int *arrayOriginal, int *arrayCopy, int arraySize){
+	while(arraySize--) *arrayCopy++ = *arrayOriginal++;
+}
 
-	// Update DateTime on screen
-	void lcdUpdateTime (char* showString ) {
-		lcd.setCursor(0,0);
-		lcd.print("                ");//clear ROW
-		lcd.setCursor(1,0);
-		lcd.print(showString);
-	}
+// Update DateTime on screen
+void lcdUpdateTime (char* showString ) {
+	lcd.setCursor(0,0);
+	lcd.print("                ");//clear ROW
+	lcd.setCursor(1,0);
+	lcd.print(showString);
+}
 
-	// Update Menu on screen
-	void lcdUpdateMenu (char* showString) {
-		lcd.setCursor(0,1);
-		lcd.print("                ");//clear ROW
-		lcd.setCursor(0,1);
-		lcd.print(showString);
-		#ifdef DEBUG
-		Serial.print(action);
-		Serial.print(".");
-		Serial.println(showString);
-		#endif
-	}
+// Update Menu on screen
+void lcdUpdateMenu (char* showString) {
+	lcd.setCursor(0,1);
+	lcd.print("                ");//clear ROW
+	lcd.setCursor(0,1);
+	lcd.print(showString);
+#ifdef DEBUG
+	Serial.print(action);
+	Serial.print(".");
+	Serial.println(showString);
+#endif
+}
 
 // Update schedules on LCD
 void lcdUpdateSchedule ( ) {
@@ -259,14 +257,14 @@ void updateDT(int* timeSet, int position, int direction) {
 		else timeSet[position] = DTMaxs[position];
 	}
 
-	  #ifdef DEBUG
-		for (int i=0;i<5;i++) { Serial.print(timeSet[i]); Serial.print(".");}
-		Serial.println();
-		#endif
+#ifdef DEBUG
+	for (int i=0;i<5;i++) { Serial.print(timeSet[i]); Serial.print(".");}
+	Serial.println();
+#endif
 
-		sprintf(formatted1, "%02d-%02d-%02d %02d:%02d", timeSet[0], timeSet[1], timeSet[2], timeSet[3], timeSet[4]);
-		lcdUpdateTime(formatted1);
-		lcd.setCursor(1+position*3,0);
+	sprintf(formatted1, "%02d-%02d-%02d %02d:%02d", timeSet[0], timeSet[1], timeSet[2], timeSet[3], timeSet[4]);
+	lcdUpdateTime(formatted1);
+	lcd.setCursor(1+position*3,0);
 }
 
 // Update Schedules
@@ -299,192 +297,194 @@ void showMessage(unsigned long Millis, char* msg) {
 }
 
 // Main part
-	void loop()	 /*----( LOOP: RUNS CONSTANTLY )----*/
-	{
-		unsigned long currentMillis = millis();
-		selectButton.Update();
-		upButton.Update();
-		downButton.Update();
+void loop()	 /*----( LOOP: RUNS CONSTANTLY )----*/
+{
+	unsigned long currentMillis = millis();
+	selectButton.Update();
+	upButton.Update();
+	downButton.Update();
 
-		// If Select presset 3 times short - run pump
-		if (selectButton.clicks == 3 && !pumpState) {
-			lightOn(currentMillis);
-			pumpState = true;
+	
+	// If Select presset 3 times short - run pump
+	if (selectButton.clicks == 3 && !pumpState) {
+		lightOn(currentMillis);
+		pumpState = true;
+		pumpTimer = currentMillis;
+		digitalWrite(pumpPin, HIGH);
+		Serial.println("Select Button clicked 3 times");
+	}
+
+	// check backlight state
+	if (lightState) {
+		if(currentMillis - lightTimer > lightInterval) {
+			lightTimer = currentMillis;
+			lightState = false;
+			lcd.noBacklight();
+		} else {
+			lcd.backlight();
+		}
+	}
+
+	// show status shange
+	if (msgState) {
+		if(currentMillis - msgTimer > msgInterval) {
+				msgTimer = currentMillis;
+				msgState = false;
+				lcdUpdateMenu(actions1[action-10]);
+		}
+	}
+
+	// Run pump for interval
+	if (pumpState) {
+		if (currentMillis - pumpTimer > pumpInterval) {
 			pumpTimer = currentMillis;
-			digitalWrite(pumpPin, HIGH);
-			Serial.println("Select Button clicked 3 times");
-		}
-
-		// check backlight state
-		if (lightState) {
-			if(currentMillis - lightTimer > lightInterval) {
-				lightTimer = currentMillis;
-				lightState = false;
-				lcd.noBacklight();
-			} else {
-				lcd.backlight();
-			}
-		}
-
-		// show status shange
-		if (msgState) {
-			if(currentMillis - msgTimer > msgInterval) {
-					msgTimer = currentMillis;
-					msgState = false;
-					lcdUpdateMenu(actions1[action-10]);
-			}
-		}
-
-		// Run pump for interval
-		if (pumpState) {
-			if (currentMillis - pumpTimer > pumpInterval) {
-				pumpTimer = currentMillis;
-				digitalWrite(pumpPin, LOW);
-				pumpState = false;
-				Serial.println("Pump timer off");
+			digitalWrite(pumpPin, LOW);
+			pumpState = false;
+			Serial.println("Pump timer off");
+			lcd.setCursor(15,1);
+			lcd.print(" ");
+			} else if (currentMillis - rotateTimer > rotateInterval) {
+				rotateTimer = currentMillis;
 				lcd.setCursor(15,1);
-				lcd.print(" ");
-				} else if (currentMillis - rotateTimer > rotateInterval) {
-					rotateTimer = currentMillis;
-					lcd.setCursor(15,1);
-					lcd.print(rotateLogo[rotateStep]);
-					rotateStep++;
-					if (rotateStep > 7) { rotateStep = 0; }
-				}
+				lcd.print(rotateLogo[rotateStep]);
+				rotateStep++;
+				if (rotateStep > 7) { rotateStep = 0; }
 			}
+		}
 
-			// Update time on screen
-			if((currentMillis - clockTimer > interval) && action != TRDDTMENU && action != SECSTATMENU ) {
-				RTC.readClock();
-				RTC.getFormattedShort(formatted);
-				clockTimer = currentMillis;
-				lcdUpdateTime(formatted);
-			}
+		// Update time on screen
+	if((currentMillis - clockTimer > interval) && action != TRDDTMENU && action != SECSTATMENU ) {
+		RTC.readClock();
+		RTC.getFormattedShort(formatted);
+		clockTimer = currentMillis;
+		lcdUpdateTime(formatted);
+	}
 
-				// Select button clicked
-				if (selectButton.clicks == 1 && !msgState) {
-					lightOn(currentMillis);
-					lightTimer = currentMillis;
-					switch (action) {
-						case ROOTMENU:
-						// Go to second level menu
-						action = SECDTMENU;
-						lcdUpdateMenu(actions1[action-10]);
-						break;
-						case SECDTMENU:
-						// Set clock
-							action = TRDDTMENU;
-							timeSelector = 0; // Starting with year
-							lcdUpdateMenu(ACTIONCT);
-						// Fill time to array if empty and make copy in timeSet2
-							if (timeSet1[0] == 0 ) {getRTCtoArray(timeSet1); copyArray(timeSet1,timeSet2,5);}
-							lcd.setCursor(1+timeSelector*3,0);
-							lcd.blink();
-						break;
-						case TRDDTMENU:
-						// Itterating through DT items
-							timeSelector++;
-							if (timeSelector > 4) timeSelector = 0;
-							lcd.setCursor(1+timeSelector*3,0);
-						break;
-						case SECSCHMENU:
-						// Set Schedule
-            	action = TRDSCHMENU;
-							schSelector = 0;
-							// Saving array to copy
-							copyArray(schedules,schedulesCPY,schAmounts);
-							lcd.blink();
-							lcdUpdateSchedule();
-						break;
-						case SECSTATMENU:
-						// Show stats
-							action = TRDSTATMENU;
-							lcdUpdateMenu(ACTIONABT);
-						break;
-						case TRDSCHMENU:
-						// Itterating through SCH items
-							schSelector++;
-							if (schSelector > 5 )	schSelector = 0;
-							lcdUpdateSchedule();
-						break;
-					}
+	// Select button clicked
+	if (selectButton.clicks == 1 && !msgState) {
+		lightOn(currentMillis);
+		lightTimer = currentMillis;
+		switch (action) {
+			case ROOTMENU:
+			// Go to second level menu
+			action = SECDTMENU;
+			lcdUpdateMenu(actions1[action-10]);
+			break;
+			case SECDTMENU:
+			// Set clock
+				action = TRDDTMENU;
+				timeSelector = 0; // Starting with year
+				lcdUpdateMenu(ACTIONCT);
+			// Fill time to array if empty and make copy in timeSet2
+				if (timeSet1[0] == 0 ) {getRTCtoArray(timeSet1); copyArray(timeSet1,timeSet2,5);}
+				lcd.setCursor(1+timeSelector*3,0);
+				lcd.blink();
+			break;
+			case TRDDTMENU:
+			// Itterating through DT items
+				timeSelector++;
+				if (timeSelector > 4) timeSelector = 0;
+				lcd.setCursor(1+timeSelector*3,0);
+			break;
+			case SECSCHMENU:
+			// Set Schedule
+				action = TRDSCHMENU;
+				schSelector = 0;
+				// Saving array to copy
+				copyArray(schedules,schedulesCPY,schAmounts);
+				lcd.blink();
+				lcdUpdateSchedule();
+			break;
+			case SECSTATMENU:
+			// Show stats
+				action = TRDSTATMENU;
+				lcdUpdateMenu(ACTIONABT);
+			break;
+			case TRDSCHMENU:
+			// Itterating through SCH items
+				schSelector++;
+				if (schSelector > 5 )	schSelector = 0;
+				lcdUpdateSchedule();
+			break;
+		}
 
-				}
+	}
 
-				// Select button pressed
-				if (selectButton.clicks == 2 && !msgState) {
-					lightOn(currentMillis);
-					// Do for Second level menu
-					if (action<TRDDTMENU) {
-						action = ROOTMENU;
-						lcdUpdateMenu(ACTIONROOT);
-						} else if (action == TRDDTMENU) {
-							// For set time menu
-							lcd.noBlink();
-							action = SECDTMENU;
-							// Compare arrays and if differs setting time
-							if (!cmpArray(timeSet1,timeSet2,5)) {
-								setRTCfromArray(timeSet1);
-								showMessage(currentMillis, DTMSG);
-							} else lcdUpdateMenu(actions1[action-10]);
-						} else if (action == TRDSCHMENU) {
-							// Schedule set menu
-							lcd.noBlink();
-							action = SECDTMENU;
-							if (setSchedules(schedules,schedulesCPY,schAmounts)) showMessage(currentMillis, SCHMSG);
-							else lcdUpdateMenu(actions1[action-10]);
-						} else if ( action == TRDSTATMENU) {
-							action = SECDTMENU;
-							lcdUpdateMenu(actions1[action-10]);
-						}
-          }
+	// Select button pressed
+	if (selectButton.clicks == 2 && !msgState) {
+		lightOn(currentMillis);
+		// Do for Second level menu
+		if (action<TRDDTMENU) {
+			action = ROOTMENU;
+			lcdUpdateMenu(ACTIONROOT);
+		} else if (action == TRDDTMENU) {
+			// For set time menu
+			lcd.noBlink();
+			action = SECDTMENU;
+			// Compare arrays and if differs setting time
+			if (!cmpArray(timeSet1,timeSet2,5)) {
+				setRTCfromArray(timeSet1);
+				showMessage(currentMillis, DTMSG);
+			} else lcdUpdateMenu(actions1[action-10]);
+		} else if (action == TRDSCHMENU) {
+			// Schedule set menu
+			lcd.noBlink();
+			action = SECDTMENU;
+			if (setSchedules(schedules,schedulesCPY,schAmounts)) showMessage(currentMillis, SCHMSG);
+			else lcdUpdateMenu(actions1[action-10]);
+		} else if ( action == TRDSTATMENU) {
+			action = SECDTMENU;
+			lcdUpdateMenu(actions1[action-10]);
+		}
+	}
 
 
-					// Up button clicked
-					if (upButton.clicks == 1 && !msgState) {
-						lightOn(currentMillis);
-						// Do for Second level menu
-						switch(action) {
-							case ROOTMENU:
-							// Do nothing in root menu
-							break;
-							case TRDDTMENU:
-								updateDT(timeSet1, timeSelector, 1);
-							break;
-							case TRDSCHMENU:
-								updateSCH(schedules, schSelector, 1);
-							break;
-							case TRDSTATMENU:
-							// Do nothing for Stats menu
-							break;
-							default:
-							action--;
-							if (action < SECDTMENU ) { action = SECSTATMENU; }
-							lcdUpdateMenu(actions1[action-10]);
-						}
-					}
+	// Up button clicked
+	if (upButton.clicks == 1 && !msgState) {
+		lightOn(currentMillis);
+		// Do for Second level menu
+		switch(action) {
+		case ROOTMENU:
+		// Do nothing in root menu
+		break;
+		case TRDDTMENU:
+			updateDT(timeSet1, timeSelector, 1);
+		break;
+		case TRDSCHMENU:
+			updateSCH(schedules, schSelector, 1);
+		break;
+		case TRDSTATMENU:
+		// Do nothing for Stats menu
+		break;
+		default:
+			action--;
+			if (action < SECDTMENU ) { action = SECSTATMENU; }
+			lcdUpdateMenu(actions1[action-10]);
+		}
+	}
 
-					// Down button clicked
-				    if (downButton.clicks == 1 && !msgState) {
-							lightOn(currentMillis);
-							// Do for Second level menu
-							switch(action) {
-								case ROOTMENU:
-								// Do nothing in root menu
-								break;
-								case TRDDTMENU:
-									updateDT(timeSet1, timeSelector, -1);
-								break;
-								case TRDSCHMENU:
-									updateSCH(schedules, schSelector, -1);
-								break;
-								case TRDSTATMENU:
-								// Do nothing for Stats menu
-								break;
-								default:
-									action++;
-									if (action > SECSTATMENU) { action = SECDTMENU; }
-									lcdUpdateMenu(actions1[action-10]);
-							}
-    }
+
+	// Down button clicked
+	if (downButton.clicks == 1 && !msgState) {
+		lightOn(currentMillis);
+		// Do for Second level menu
+		switch(action) {
+		case ROOTMENU:
+		// Do nothing in root menu
+		break;
+		case TRDDTMENU:
+			updateDT(timeSet1, timeSelector, -1);
+		break;
+		case TRDSCHMENU:
+			updateSCH(schedules, schSelector, -1);
+		break;
+		case TRDSTATMENU:
+		// Do nothing for Stats menu
+		break;
+		default:
+			action++;
+			if (action > SECSTATMENU) { action = SECDTMENU; }
+			lcdUpdateMenu(actions1[action-10]);
+		}
+	}
 }
