@@ -55,7 +55,7 @@ int schedulesCPY[] = {0,0,0,0,0,0}; // Copy to track changes
 // Array for state displaying
 char schedulesState [] = {'N','N'};
 // Amount of schedules
-const int schAmounts = 2;
+const int schAmount = 2;
 // Blink cursor positions
 // 0123456789012345
 // N*00:00  N*00:00
@@ -91,6 +91,7 @@ int timeValue;
 boolean pumpState = false; // Pump run state
 boolean lightState = true; // Backlight state
 boolean msgState = false; // Show Message on screen
+boolean schState = false; // Schedule run flag
 int rotateStep = 0; // rotate logo show step
 
 // Timers
@@ -120,11 +121,11 @@ void setup()
 	actions1[2] = action2;
 
 	// Init EEPROM values if 255
-	for (int i = 0; i < schAmounts*3 ;i++)
+	for (int i = 0; i < schAmount*3 ;i++)
 		if ( EEPROM.read(schedulesEEPROM[i]) == 255) EEPROM.write(schedulesEEPROM[i],0);
 
 	// init schedules from EEPROM
-	for (int i = 0; i < schAmounts*3; i++) {
+	for (int i = 0; i < schAmount*3; i++) {
 		schedules[i] = EEPROM.read(schedulesEEPROM[i]);
 
 #ifdef DEBUG
@@ -236,7 +237,7 @@ void lcdUpdateMenu (char* showString) {
 
 // Update schedules on LCD
 void lcdUpdateSchedule ( ) {
-	for (int i = 0; i < schAmounts; i++) if (schedules[i*3] == 1 ) schedulesState[i] = 'Y';
+	for (int i = 0; i < schAmount; i++) if (schedules[i*3] == 1 ) schedulesState[i] = 'Y';
 			else schedulesState[i] = 'N';
 	sprintf(formatted1, "%c*%02d:%02d  %c*%02d:%02d", schedulesState[0], schedules[1], schedules[2], schedulesState[1], schedules[4], schedules[5] );
 	lcdUpdateMenu(formatted1);
@@ -304,16 +305,24 @@ void loop()	 /*----( LOOP: RUNS CONSTANTLY )----*/
 	upButton.Update();
 	downButton.Update();
 
-	
-	// If Select presset 3 times short - run pump
-	if (selectButton.clicks == 3 && !pumpState) {
-		lightOn(currentMillis);
-		pumpState = true;
-		pumpTimer = currentMillis;
-		digitalWrite(pumpPin, HIGH);
-		Serial.println("Select Button clicked 3 times");
+	// Check schedules
+	if (!schState) {
+		for (int i = 0; i < schAmount; ++i) {
+			if (schedules[i] == 1 && 
+				schedules[i+1] == RTC.getHours() 
+				&& schedules[i+2] == RTC.getMinutes()) 
+			{
+				schState = true;
+				lightOn(currentMillis);
+				pumpState = true;
+				pumpTimer = currentMillis;
+				digitalWrite(pumpPin, HIGH);
+	#ifdef DEBUG
+				Serial.println("Select Button clicked 3 times");
+	#endif
+			} else schState = false;
+		}	
 	}
-
 	// check backlight state
 	if (lightState) {
 		if(currentMillis - lightTimer > lightInterval) {
@@ -352,12 +361,23 @@ void loop()	 /*----( LOOP: RUNS CONSTANTLY )----*/
 			}
 		}
 
-		// Update time on screen
+	// Update time on screen
 	if((currentMillis - clockTimer > interval) && action != TRDDTMENU && action != SECSTATMENU ) {
 		RTC.readClock();
 		RTC.getFormattedShort(formatted);
 		clockTimer = currentMillis;
 		lcdUpdateTime(formatted);
+	}
+
+	// If Select presset 3 times short - run pump
+	if (selectButton.clicks == 3 && !pumpState) {
+		lightOn(currentMillis);
+		pumpState = true;
+		pumpTimer = currentMillis;
+		digitalWrite(pumpPin, HIGH);
+#ifdef DEBUG
+		Serial.println("Select Button clicked 3 times");
+#endif
 	}
 
 	// Select button clicked
@@ -391,7 +411,7 @@ void loop()	 /*----( LOOP: RUNS CONSTANTLY )----*/
 				action = TRDSCHMENU;
 				schSelector = 0;
 				// Saving array to copy
-				copyArray(schedules,schedulesCPY,schAmounts);
+				copyArray(schedules,schedulesCPY,schAmount);
 				lcd.blink();
 				lcdUpdateSchedule();
 			break;
@@ -430,7 +450,7 @@ void loop()	 /*----( LOOP: RUNS CONSTANTLY )----*/
 			// Schedule set menu
 			lcd.noBlink();
 			action = SECDTMENU;
-			if (setSchedules(schedules,schedulesCPY,schAmounts)) showMessage(currentMillis, SCHMSG);
+			if (setSchedules(schedules,schedulesCPY,schAmount)) showMessage(currentMillis, SCHMSG);
 			else lcdUpdateMenu(actions1[action-10]);
 		} else if ( action == TRDSTATMENU) {
 			action = SECDTMENU;
