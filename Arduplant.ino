@@ -14,8 +14,8 @@
 #include <EEPROM.h>
 
 // Defines
-//#define PROD ; uncomment after debug
-#define DEBUG
+#define PROD ; uncomment after debug
+//#define DEBUG
 
 // Pins
 const int pumpPin = 9; // pumpControl pin
@@ -105,7 +105,7 @@ unsigned long pumpTimer; // PumpTimer
 const long interval = 30000; // Time display update interval
 const long lightInterval = 10000; // Backlight on interval
 const long msgInterval = 3000; // Show Message interval
-const int pumpInterval = 6000; // Pump run interval
+const int pumpInterval = 8000; // Pump run interval
 const int rotateInterval = 100; // rotate logo update interval
 
 
@@ -154,6 +154,7 @@ void setup()
 	lcd.print("All your plant");
 	lcd.setCursor(0,1);
 	lcd.print("are belong to us");
+	delay(3000);
 #endif
 
 	// Write time first time
@@ -200,11 +201,18 @@ void setRTCfromArray (int* timeArray) {
 // Set Schedules
 boolean setSchedules (int* schArray, int* schArrayCPY, int arraySize) {
 	boolean fState = false;
-	for (int i = 0; i < arraySize; i++ )
+	for (int i = 0; i < arraySize*3; i++ ) {
+#ifdef DEBUG
+	Serial.print(schArray[i]);
+	Serial.print('=');
+	Serial.println(schArrayCPY[i]);
+#endif
+
 		if (schArray[i] != schArrayCPY[i]) {
 			EEPROM.write(schedulesEEPROM[i],schArray[i]);
 			fState = true;
 		}
+	}
 	return fState;
  }
 
@@ -220,6 +228,9 @@ void lcdUpdateTime (char* showString ) {
 	lcd.print("                ");//clear ROW
 	lcd.setCursor(1,0);
 	lcd.print(showString);
+#ifdef DEBUG
+	Serial.println(showString);
+#endif
 }
 
 // Update Menu on screen
@@ -306,22 +317,24 @@ void loop()	 /*----( LOOP: RUNS CONSTANTLY )----*/
 	downButton.Update();
 
 	// Check schedules
-	if (!schState) {
+	if (!schState && action != TRDSCHMENU) {
 		for (int i = 0; i < schAmount; ++i) {
-			if (schedules[i] == 1 && 
-				schedules[i+1] == RTC.getHours() 
-				&& schedules[i+2] == RTC.getMinutes()) 
-			{
-				schState = true;
-				lightOn(currentMillis);
-				pumpState = true;
-				pumpTimer = currentMillis;
-				digitalWrite(pumpPin, HIGH);
+			if (schedules[i] == 1) {
+				RTC.readClock();
+				if ( schedules[i+1] == RTC.getHours()
+					&& schedules[i+2] == RTC.getMinutes())
+				{
+					schState = true;
+					lightOn(currentMillis);
+					pumpState = true;
+					pumpTimer = currentMillis;
+					digitalWrite(pumpPin, HIGH);
 	#ifdef DEBUG
-				Serial.println("Select Button clicked 3 times");
+					Serial.println("Scheduled run");
 	#endif
-			} else schState = false;
-		}	
+					} else schState = false;
+				}
+		}
 	}
 	// check backlight state
 	if (lightState) {
@@ -411,7 +424,7 @@ void loop()	 /*----( LOOP: RUNS CONSTANTLY )----*/
 				action = TRDSCHMENU;
 				schSelector = 0;
 				// Saving array to copy
-				copyArray(schedules,schedulesCPY,schAmount);
+				copyArray(schedules,schedulesCPY,schAmount*3);
 				lcd.blink();
 				lcdUpdateSchedule();
 			break;
