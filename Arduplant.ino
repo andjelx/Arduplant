@@ -91,7 +91,7 @@ int timeValue;
 boolean pumpState = false; // Pump run state
 boolean lightState = true; // Backlight state
 boolean msgState = false; // Show Message on screen
-boolean schState = false; // Schedule run flag
+boolean schState[] = {false,false}; // Schedule run flag
 int rotateStep = 0; // rotate logo show step
 
 // Timers
@@ -317,25 +317,32 @@ void loop()	 /*----( LOOP: RUNS CONSTANTLY )----*/
 	downButton.Update();
 
 	// Check schedules
-	if (!schState && action != TRDSCHMENU) {
+	if (action != TRDSCHMENU) {
 		for (int i = 0; i < schAmount; ++i) {
-			if (schedules[i] == 1) {
+			if (schedules[i*3] == 1) {
 				RTC.readClock();
-				if ( schedules[i+1] == RTC.getHours()
-					&& schedules[i+2] == RTC.getMinutes())
-				{
-					schState = true;
-					lightOn(currentMillis);
-					pumpState = true;
-					pumpTimer = currentMillis;
-					digitalWrite(pumpPin, HIGH);
-	#ifdef DEBUG
-					Serial.println("Scheduled run");
-	#endif
-					} else schState = false;
-				}
+				/*#ifdef DEBUG
+				Serial.print("Schedule check: ");
+				Serial.print(schedules[i*3+1]);
+				Serial.println(schedules[i*3+2]);
+				#endif*/
+
+				if (schedules[i*3+1] == RTC.getHours() && schedules[i*3+2] == RTC.getMinutes()) {
+					if (!schState[i]) {
+						schState[i] = true;
+						lightOn(currentMillis);
+						pumpState = true;
+						pumpTimer = currentMillis;
+						digitalWrite(pumpPin, HIGH);
+						#ifdef DEBUG
+						Serial.println("Scheduled run");
+						#endif
+					 }
+				} else schState[i] = false;
+			}
 		}
 	}
+
 	// check backlight state
 	if (lightState) {
 		if(currentMillis - lightTimer > lightInterval) {
