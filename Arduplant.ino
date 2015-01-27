@@ -14,8 +14,8 @@
 #include <EEPROM.h>
 
 // Defines
-#define PROD ; uncomment after debug
-//#define DEBUG
+#define PROD // uncomment after debug
+#define DEBUG
 
 // Pins
 const int pumpPin = 9; // pumpControl pin
@@ -48,6 +48,9 @@ const int DTMins[5] = {14, 1, 1, 0, 0};//Minimums for setting date\time
 const int monthsMaxs[12] = {31,29,31,30,31,30,31,31,30,31,30,31}; // Maximums for months
 int timeSet1[5] = {0,0,0,0,0}; // Initial time array
 int timeSet2[5] = {0,0,0,0,0}; // New time array
+#ifdef DEBUG
+int timeSetDbg[5]  = {0,0,0,0,0}; // Time array for debug
+#endif
 // Schedules
 // (0/1 (enabled/disabled), HH, MM)
 int schedules[] = {0,0,0,0,0,0};
@@ -335,7 +338,9 @@ void loop()	 /*----( LOOP: RUNS CONSTANTLY )----*/
 						pumpTimer = currentMillis;
 						digitalWrite(pumpPin, HIGH);
 						#ifdef DEBUG
-						Serial.println("Scheduled run");
+						Serial.print("Schedule ");
+						Serial.print(i);
+						Serial.println(" run");
 						#endif
 					 }
 				} else schState[i] = false;
