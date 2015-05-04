@@ -71,6 +71,7 @@ const int schChgCursor[6] = {0,2,5,9,11,14};
 // Menu actions
 char ACTIONROOT[] = "SELECT for MENU";
 char ACTIONCT[] = "Setting time";
+char ACTIONDUR[] = "Setting dur.";
 char ACTIONABT[] = "Arduplant v1.1";
 char action0[] = "Set Clock";
 char action1[] = "Set Schedule";
@@ -85,8 +86,8 @@ const int TRDDTMENU = 20;
 const int SECSCHMENU = 11;
 const int TRDSCHMENU = 30;
 const int SECSTATMENU = 12;
-const int TRDSTATMENU = 40;
-const int SECSTATMENU = 13;
+const int TRDDURMENU = 40;
+const int SECDURMENU = 13;
 const int TRDSTATMENU = 50;
 
 // Messages
@@ -268,8 +269,18 @@ void lcdUpdateSchedule ( ) {
 	lcdUpdateMenu(formatted1);
 	lcd.setCursor(schChgCursor[schSelector],1);
 }
-// Update time
 
+// Update duration shown on LCD
+void lcdUpdateDuration ( ) {
+	// Getting duration from first schedule only
+	sprintf(formatted1, "Seconds*%02d", schedules[3]);
+	lcdUpdateMenu(formatted1);
+	lcd.setCursor(8,1);
+}
+
+
+
+// Update time
 void updateDT(int* timeSet, int position, int direction) {
 	if (direction == 1) timeSet[position]++;
 	else timeSet[position]--;
@@ -309,6 +320,24 @@ void updateSCH(int* schArray, int position, int direction) {
 
 	lcdUpdateSchedule ( );
 }
+
+// Update Duration
+void updateDUR(int* schArray, int position, int direction) {
+	position = 4; 	// Only for first schedule
+
+	if (direction == 1) schArray[position]++;
+	else schArray[position]--;
+
+	// check range for Seconds
+	if (position % 4 == 0) if (schArray[position] > 29) schArray[position] = 0;
+		else if (schArray[position] < 0) schArray[position] = 29;
+
+	// Setting same duration value for all schedules
+	for (int i = 0; i < schAmount; i++) schArray[position*i+3] = schArray[position]
+
+	lcdUpdateDuration ( );
+}
+
 
 // turn Backlight on
 void lightOn(unsigned long Millis) {
@@ -465,6 +494,11 @@ void loop()	 /*----( LOOP: RUNS CONSTANTLY )----*/
 				if (schSelector > 5 )	schSelector = 0;
 				lcdUpdateSchedule();
 			break;
+			case TRDDURMENU:
+			// Nonthing to itterate
+				lcdUpdateMenu(ACTIONDUR);
+				lcdUpdateDuration();
+			break;
 		}
 
 	}
@@ -491,6 +525,12 @@ void loop()	 /*----( LOOP: RUNS CONSTANTLY )----*/
 			action = SECDTMENU;
 			if (setSchedules(schedules,schedulesCPY,schAmount)) showMessage(currentMillis, SCHMSG);
 			else lcdUpdateMenu(actions1[action-10]);
+		} else if (action == TRDSCHMENU) {
+			// Duration set menu
+			lcd.noBlink();
+			action = SECDTMENU;
+			if (setSchedules(schedules,schedulesCPY,schAmount)) showMessage(currentMillis, DURMSG);
+			else lcdUpdateMenu(actions1[action-10]);
 		} else if ( action == TRDSTATMENU) {
 			action = SECDTMENU;
 			lcdUpdateMenu(actions1[action-10]);
@@ -511,6 +551,9 @@ void loop()	 /*----( LOOP: RUNS CONSTANTLY )----*/
 		break;
 		case TRDSCHMENU:
 			updateSCH(schedules, schSelector, 1);
+		break;
+		case TRDDURMENU:
+			updateDUR(schedules, schSelector, 1);
 		break;
 		case TRDSTATMENU:
 		// Do nothing for Stats menu
@@ -536,6 +579,9 @@ void loop()	 /*----( LOOP: RUNS CONSTANTLY )----*/
 		break;
 		case TRDSCHMENU:
 			updateSCH(schedules, schSelector, -1);
+		break;
+		case TRDDURMENU:
+			updateDUR(schedules, schSelector, -1);
 		break;
 		case TRDSTATMENU:
 		// Do nothing for Stats menu
