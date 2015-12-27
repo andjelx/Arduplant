@@ -108,7 +108,7 @@ unsigned long pumpTimer; // PumpTimer
 const long interval = 30000; // Time display update interval
 const long lightInterval = 10000; // Backlight on interval
 const long msgInterval = 3000; // Show Message interval
-const int pumpInterval = 8000; // Pump run interval
+const int pumpInterval = 15000; // Pump run interval - 15 sec
 const int rotateInterval = 100; // rotate logo update interval
 
 
