@@ -25,8 +25,12 @@ const int downButtonPin = 3;
 const int upButtonPin = 4;
 
 // EEPROM locations
-// ST1,HH1,MM1,ST2,HH2,MM2
-const int schedulesEEPROM[] = {0,1,2,3,4,5};
+// ST1,HH1,MM1,DUR1,ST2,HH2,MM2,DUR2
+// ST - Status
+// HH - Hour start
+// MM - Munites start
+// DUR - Duration in seconds
+const int schedulesEEPROM[] = {0,1,2,3,4,5,6,7};
 
 // set the LCD address to 0x27 for a 20 chars 4 line display
 // Set the pins on the I2C chip used for LCD connections:
@@ -52,9 +56,9 @@ int timeSet2[5] = {0,0,0,0,0}; // New time array
 int timeSetDbg[5]  = {0,0,0,0,0}; // Time array for debug
 #endif
 // Schedules
-// (0/1 (enabled/disabled), HH, MM)
-int schedules[] = {0,0,0,0,0,0};
-int schedulesCPY[] = {0,0,0,0,0,0}; // Copy to track changes
+// (0/1 (enabled/disabled), HH, MM, SEC)
+int schedules[] = {0,0,0,0, 0,0,0,0};
+int schedulesCPY[] = {0,0,0,0, 0,0,0,0}; // Copy to track changes
 // Array for state displaying
 char schedulesState [] = {'N','N'};
 // Amount of schedules
@@ -67,11 +71,13 @@ const int schChgCursor[6] = {0,2,5,9,11,14};
 // Menu actions
 char ACTIONROOT[] = "SELECT for MENU";
 char ACTIONCT[] = "Setting time";
-char ACTIONABT[] = "Arduplant v0.1";
+char ACTIONDUR[] = "Setting dur.";
+char ACTIONABT[] = "Arduplant v1.1";
 char action0[] = "Set Clock";
 char action1[] = "Set Schedule";
-char action2[] = "About";
-char* actions1[4];
+char action2[] = "Set Duration";
+char action3[] = "About";
+char* actions1[5];
 
 // Menu actions
 const int ROOTMENU = 0;
@@ -80,11 +86,14 @@ const int TRDDTMENU = 20;
 const int SECSCHMENU = 11;
 const int TRDSCHMENU = 30;
 const int SECSTATMENU = 12;
-const int TRDSTATMENU = 40;
+const int TRDDURMENU = 40;
+const int SECDURMENU = 13;
+const int TRDSTATMENU = 50;
 
 // Messages
 char DTMSG[] = "* Time saved! *";
 char SCHMSG[] ="* Schdl svd!  *";
+char DURMSG[] ="* Dur-on svd! *";
 
 // States
 int action = ROOTMENU; // menu state
@@ -97,6 +106,7 @@ boolean msgState = false; // Show Message on screen
 boolean schState[] = {false,false}; // Schedule run flag
 int rotateStep = 0; // rotate logo show step
 
+
 // Timers
 unsigned long clockTimer; // Time display update timer
 unsigned long lightTimer; // Backlight timer
@@ -105,10 +115,15 @@ unsigned long rotateTimer; // RotateLogo timer
 unsigned long pumpTimer; // PumpTimer
 
 // Intervals
+int pumpInterval = 8000; // Pump run interval
+
 const long interval = 30000; // Time display update interval
 const long lightInterval = 10000; // Backlight on interval
 const long msgInterval = 3000; // Show Message interval
+<<<<<<< HEAD
 const int pumpInterval = 15000; // Pump run interval - 15 sec
+=======
+>>>>>>> 09faa010f88626ecbeb1ed0b4362ac53529025d2
 const int rotateInterval = 100; // rotate logo update interval
 
 
@@ -122,13 +137,14 @@ void setup()
 	actions1[0] = action0;
 	actions1[1] = action1;
 	actions1[2] = action2;
+	actions1[3] = action3;
 
 	// Init EEPROM values if 255
-	for (int i = 0; i < schAmount*3 ;i++)
+	for (int i = 0; i < schAmount*4 ;i++)
 		if ( EEPROM.read(schedulesEEPROM[i]) == 255) EEPROM.write(schedulesEEPROM[i],0);
 
 	// init schedules from EEPROM
-	for (int i = 0; i < schAmount*3; i++) {
+	for (int i = 0; i < schAmount*4; i++) {
 		schedules[i] = EEPROM.read(schedulesEEPROM[i]);
 
 #ifdef DEBUG
@@ -204,7 +220,7 @@ void setRTCfromArray (int* timeArray) {
 // Set Schedules
 boolean setSchedules (int* schArray, int* schArrayCPY, int arraySize) {
 	boolean fState = false;
-	for (int i = 0; i < arraySize*3; i++ ) {
+	for (int i = 0; i < arraySize*4; i++ ) {
 #ifdef DEBUG
 	Serial.print(schArray[i]);
 	Serial.print('=');
@@ -251,14 +267,24 @@ void lcdUpdateMenu (char* showString) {
 
 // Update schedules on LCD
 void lcdUpdateSchedule ( ) {
-	for (int i = 0; i < schAmount; i++) if (schedules[i*3] == 1 ) schedulesState[i] = 'Y';
+	for (int i = 0; i < schAmount; i++) if (schedules[i*4] == 1 ) schedulesState[i] = 'Y';
 			else schedulesState[i] = 'N';
-	sprintf(formatted1, "%c*%02d:%02d  %c*%02d:%02d", schedulesState[0], schedules[1], schedules[2], schedulesState[1], schedules[4], schedules[5] );
+	sprintf(formatted1, "%c*%02d:%02d  %c*%02d:%02d", schedulesState[0], schedules[1], schedules[2], schedulesState[1], schedules[5], schedules[6] );
 	lcdUpdateMenu(formatted1);
 	lcd.setCursor(schChgCursor[schSelector],1);
 }
-// Update time
 
+// Update duration shown on LCD
+void lcdUpdateDuration ( ) {
+	// Getting duration from first schedule only
+	sprintf(formatted1, "Seconds*%02d", schedules[3]);
+	lcdUpdateMenu(formatted1);
+	lcd.setCursor(8,1);
+}
+
+
+
+// Update time
 void updateDT(int* timeSet, int position, int direction) {
 	if (direction == 1) timeSet[position]++;
 	else timeSet[position]--;
@@ -299,6 +325,24 @@ void updateSCH(int* schArray, int position, int direction) {
 	lcdUpdateSchedule ( );
 }
 
+// Update Duration
+void updateDUR(int* schArray, int position, int direction) {
+	position = 4; 	// Only for first schedule
+
+	if (direction == 1) schArray[position]++;
+	else schArray[position]--;
+
+	// check range for Seconds
+	if (position % 4 == 0) if (schArray[position] > 29) schArray[position] = 0;
+		else if (schArray[position] < 0) schArray[position] = 29;
+
+	// Setting same duration value for all schedules
+	for (int i = 0; i < schAmount; i++) schArray[position*i+3] = schArray[position]
+
+	lcdUpdateDuration ( );
+}
+
+
 // turn Backlight on
 void lightOn(unsigned long Millis) {
 	lightState = true;
@@ -322,25 +366,28 @@ void loop()	 /*----( LOOP: RUNS CONSTANTLY )----*/
 	// Check schedules
 	if (action != TRDSCHMENU) {
 		for (int i = 0; i < schAmount; ++i) {
-			if (schedules[i*3] == 1) {
+			if (schedules[i*4] == 1) {
 				RTC.readClock();
 				/*#ifdef DEBUG
 				Serial.print("Schedule check: ");
-				Serial.print(schedules[i*3+1]);
-				Serial.println(schedules[i*3+2]);
+				Serial.print(schedules[i*4+1]);
+				Serial.println(schedules[i*4+2]);
 				#endif*/
 
-				if (schedules[i*3+1] == RTC.getHours() && schedules[i*3+2] == RTC.getMinutes()) {
+				if (schedules[i*4+1] == RTC.getHours() && schedules[i*4+2] == RTC.getMinutes()) {
 					if (!schState[i]) {
 						schState[i] = true;
 						lightOn(currentMillis);
 						pumpState = true;
+						pumpInterval = schedules[i*4+3]*1000;
 						pumpTimer = currentMillis;
 						digitalWrite(pumpPin, HIGH);
 						#ifdef DEBUG
 						Serial.print("Schedule ");
 						Serial.print(i);
-						Serial.println(" run");
+						Serial.print(" run for ");
+						Serial.print(pumpInterval);
+						Serial.println(" seconds");
 						#endif
 					 }
 				} else schState[i] = false;
@@ -436,7 +483,7 @@ void loop()	 /*----( LOOP: RUNS CONSTANTLY )----*/
 				action = TRDSCHMENU;
 				schSelector = 0;
 				// Saving array to copy
-				copyArray(schedules,schedulesCPY,schAmount*3);
+				copyArray(schedules,schedulesCPY,schAmount*4);
 				lcd.blink();
 				lcdUpdateSchedule();
 			break;
@@ -450,6 +497,11 @@ void loop()	 /*----( LOOP: RUNS CONSTANTLY )----*/
 				schSelector++;
 				if (schSelector > 5 )	schSelector = 0;
 				lcdUpdateSchedule();
+			break;
+			case TRDDURMENU:
+			// Nonthing to itterate
+				lcdUpdateMenu(ACTIONDUR);
+				lcdUpdateDuration();
 			break;
 		}
 
@@ -477,6 +529,12 @@ void loop()	 /*----( LOOP: RUNS CONSTANTLY )----*/
 			action = SECDTMENU;
 			if (setSchedules(schedules,schedulesCPY,schAmount)) showMessage(currentMillis, SCHMSG);
 			else lcdUpdateMenu(actions1[action-10]);
+		} else if (action == TRDSCHMENU) {
+			// Duration set menu
+			lcd.noBlink();
+			action = SECDTMENU;
+			if (setSchedules(schedules,schedulesCPY,schAmount)) showMessage(currentMillis, DURMSG);
+			else lcdUpdateMenu(actions1[action-10]);
 		} else if ( action == TRDSTATMENU) {
 			action = SECDTMENU;
 			lcdUpdateMenu(actions1[action-10]);
@@ -497,6 +555,9 @@ void loop()	 /*----( LOOP: RUNS CONSTANTLY )----*/
 		break;
 		case TRDSCHMENU:
 			updateSCH(schedules, schSelector, 1);
+		break;
+		case TRDDURMENU:
+			updateDUR(schedules, schSelector, 1);
 		break;
 		case TRDSTATMENU:
 		// Do nothing for Stats menu
@@ -522,6 +583,9 @@ void loop()	 /*----( LOOP: RUNS CONSTANTLY )----*/
 		break;
 		case TRDSCHMENU:
 			updateSCH(schedules, schSelector, -1);
+		break;
+		case TRDDURMENU:
+			updateDUR(schedules, schSelector, -1);
 		break;
 		case TRDSTATMENU:
 		// Do nothing for Stats menu
